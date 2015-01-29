@@ -15,7 +15,7 @@ Usage of listgen:
   -type="": Value type.
 ```
 
-For example stringlist implementation is generated using:
+For example, the stringlist implementation is generated using:
 
 ```bash
 $ listgen -package stringlist -type=string \
