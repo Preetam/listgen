@@ -2,8 +2,8 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"io"
-	"log"
 	"os"
 )
 
@@ -14,14 +14,31 @@ type listDesc struct {
 }
 
 func main() {
-	outputFile := flag.String("out", "", "output file")
-	packageName := flag.String("package", "", "package name")
-	valueType := flag.String("type", "", "value type")
-	cmpFunc := flag.String("cmp", "", "comparison function body")
+	outputFile := flag.String("out", "", "Output file. Leave blank for stdout.")
+	packageName := flag.String("package", "", "Package name to use for the list.")
+	valueType := flag.String("type", "", "Value type.")
+	cmpFunc := flag.String("cmp", "", "Comparison function body. The argument names are `a' and `b'.")
 	flag.Parse()
 
-	if *valueType == "" || *cmpFunc == "" || *packageName == "" {
-		log.Fatal("value type, comparison function body, and package name must be given")
+	exit := false
+
+	if *valueType == "" {
+		fmt.Println("Value type must be given using -type=[type].")
+		exit = true
+	}
+
+	if *cmpFunc == "" {
+		fmt.Println("Comparison function body must be given using -cmp='[body]'.")
+		exit = true
+	}
+
+	if *packageName == "" {
+		fmt.Println("Package name must be given using -package='[package]'.")
+		exit = true
+	}
+
+	if exit {
+		os.Exit(1)
 	}
 
 	var w io.Writer = os.Stdout
@@ -29,7 +46,8 @@ func main() {
 	if *outputFile != "" {
 		f, err := os.Create(*outputFile)
 		if err != nil {
-			log.Fatal(err)
+			fmt.Println(err)
+			os.Exit(1)
 		}
 		w = f
 		defer f.Close()
