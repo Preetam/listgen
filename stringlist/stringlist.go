@@ -31,19 +31,19 @@ type iterator struct {
 	valid   bool
 }
 
+func cmp(a string, b string) int {
+	if a < b {
+		return -1
+	}
+	if a > b {
+		return 1
+	}
+	return 0
+}
+
 // NewList returns a lock-free ordered list with values of type string.
 func NewList() *list {
-	return &list{
-		cmp: func(a string, b string) int {
-			if a < b {
-				return -1
-			}
-			if a > b {
-				return 1
-			}
-			return 0
-		},
-	}
+	return &list{}
 }
 
 // Insert inserts v into the list in order. An error is returned if v is already present.
@@ -65,7 +65,7 @@ HEAD:
 	}
 
 	headNode := (*node)(headPtr)
-	if l.cmp(headNode.val, n.val) > 0 {
+	if cmp(headNode.val, n.val) > 0 {
 		n.next = headPtr
 		if !atomic.CompareAndSwapPointer(&l.head, headPtr, unsafe.Pointer(n)) {
 			goto HEAD
@@ -85,7 +85,7 @@ NEXT:
 	}
 
 	nextNode := (*node)(nextPtr)
-	if l.cmp(nextNode.val, n.val) > 0 {
+	if cmp(nextNode.val, n.val) > 0 {
 		n.next = nextPtr
 		if !atomic.CompareAndSwapPointer(&headNode.next, nextPtr, unsafe.Pointer(n)) {
 			goto NEXT
@@ -94,7 +94,7 @@ NEXT:
 		return nil
 	}
 
-	if l.cmp(nextNode.val, n.val) == 0 {
+	if cmp(nextNode.val, n.val) == 0 {
 		return ErrValueExists
 	}
 
@@ -113,7 +113,7 @@ HEAD:
 
 	headNode := (*node)(headPtr)
 
-	if l.cmp(headNode.val, v) == 0 {
+	if cmp(headNode.val, v) == 0 {
 		nextPtr := atomic.LoadPointer(&headNode.next)
 		if !atomic.CompareAndSwapPointer(&l.head, headPtr, nextPtr) {
 			goto HEAD
@@ -130,11 +130,11 @@ NEXT:
 
 	nextNode := (*node)(nextPtr)
 
-	if l.cmp(nextNode.val, v) > 0 {
+	if cmp(nextNode.val, v) > 0 {
 		return ErrValueNotFound
 	}
 
-	if l.cmp(nextNode.val, v) == 0 {
+	if cmp(nextNode.val, v) == 0 {
 		replacementPtr := atomic.LoadPointer(&nextNode.next)
 		if !atomic.CompareAndSwapPointer(&headNode.next, nextPtr, replacementPtr) {
 			goto NEXT
