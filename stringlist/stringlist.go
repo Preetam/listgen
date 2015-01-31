@@ -11,8 +11,8 @@ import (
 )
 
 var (
-	ErrValueExists   = errors.New("stringlist: value exists")
-	ErrValueNotFound = errors.New("stringlist: value does not exist")
+	ErrStringListValueExists   = errors.New("stringlist (StringList): value exists")
+	ErrStringListValueNotFound = errors.New("stringlist (StringList): value does not exist")
 )
 
 type StringList struct {
@@ -94,7 +94,7 @@ NEXT:
 	}
 
 	if StringListCmp(nextNode.val, n.val) == 0 {
-		return ErrValueExists
+		return ErrStringListValueExists
 	}
 
 	headNode = nextNode
@@ -107,7 +107,7 @@ HEAD:
 	headPtr := atomic.LoadPointer(&l.head)
 
 	if headPtr == nil {
-		return ErrValueNotFound
+		return ErrStringListValueNotFound
 	}
 
 	headNode := (*node)(headPtr)
@@ -124,13 +124,13 @@ HEAD:
 NEXT:
 	nextPtr := atomic.LoadPointer(&headNode.next)
 	if nextPtr == nil {
-		return ErrValueNotFound
+		return ErrStringListValueNotFound
 	}
 
 	nextNode := (*node)(nextPtr)
 
 	if StringListCmp(nextNode.val, v) > 0 {
-		return ErrValueNotFound
+		return ErrStringListValueNotFound
 	}
 
 	if StringListCmp(nextNode.val, v) == 0 {
@@ -185,7 +185,7 @@ func (i *StringListIterator) Value() (string, error) {
 	var v string
 
 	if i.current == nil {
-		return v, ErrValueNotFound
+		return v, ErrStringListValueNotFound
 	}
 
 	return i.current.val, nil

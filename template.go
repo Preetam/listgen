@@ -17,8 +17,8 @@ import (
 )
 
 var (
-	ErrValueExists   = errors.New("{{.Package}}: value exists")
-	ErrValueNotFound = errors.New("{{.Package}}: value does not exist")
+	Err{{.ListType}}ValueExists   = errors.New("{{.Package}} ({{.ListType}}): value exists")
+	Err{{.ListType}}ValueNotFound = errors.New("{{.Package}} ({{.ListType}}): value does not exist")
 )
 
 type {{.ListType}} struct {
@@ -94,7 +94,7 @@ NEXT:
 	}
 
 	if {{.ListType}}Cmp(nextNode.val, n.val) == 0 {
-		return ErrValueExists
+		return Err{{.ListType}}ValueExists
 	}
 
 	headNode = nextNode
@@ -107,7 +107,7 @@ HEAD:
 	headPtr := atomic.LoadPointer(&l.head)
 
 	if headPtr == nil {
-		return ErrValueNotFound
+		return Err{{.ListType}}ValueNotFound
 	}
 
 	headNode := (*node)(headPtr)
@@ -124,13 +124,13 @@ HEAD:
 NEXT:
 	nextPtr := atomic.LoadPointer(&headNode.next)
 	if nextPtr == nil {
-		return ErrValueNotFound
+		return Err{{.ListType}}ValueNotFound
 	}
 
 	nextNode := (*node)(nextPtr)
 
 	if {{.ListType}}Cmp(nextNode.val, v) > 0 {
-		return ErrValueNotFound
+		return Err{{.ListType}}ValueNotFound
 	}
 
 	if {{.ListType}}Cmp(nextNode.val, v) == 0 {
@@ -185,7 +185,7 @@ func (i *{{.ListType}}Iterator) Value() ({{.ValueType}}, error) {
 	var v {{.ValueType}}
 
 	if i.current == nil {
-		return v, ErrValueNotFound
+		return v, Err{{.ListType}}ValueNotFound
 	}
 
 	return i.current.val, nil

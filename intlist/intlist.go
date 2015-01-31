@@ -11,8 +11,8 @@ import (
 )
 
 var (
-	ErrValueExists   = errors.New("intlist: value exists")
-	ErrValueNotFound = errors.New("intlist: value does not exist")
+	ErrIntListValueExists   = errors.New("intlist (IntList): value exists")
+	ErrIntListValueNotFound = errors.New("intlist (IntList): value does not exist")
 )
 
 type IntList struct {
@@ -88,7 +88,7 @@ NEXT:
 	}
 
 	if IntListCmp(nextNode.val, n.val) == 0 {
-		return ErrValueExists
+		return ErrIntListValueExists
 	}
 
 	headNode = nextNode
@@ -101,7 +101,7 @@ HEAD:
 	headPtr := atomic.LoadPointer(&l.head)
 
 	if headPtr == nil {
-		return ErrValueNotFound
+		return ErrIntListValueNotFound
 	}
 
 	headNode := (*node)(headPtr)
@@ -118,13 +118,13 @@ HEAD:
 NEXT:
 	nextPtr := atomic.LoadPointer(&headNode.next)
 	if nextPtr == nil {
-		return ErrValueNotFound
+		return ErrIntListValueNotFound
 	}
 
 	nextNode := (*node)(nextPtr)
 
 	if IntListCmp(nextNode.val, v) > 0 {
-		return ErrValueNotFound
+		return ErrIntListValueNotFound
 	}
 
 	if IntListCmp(nextNode.val, v) == 0 {
@@ -179,7 +179,7 @@ func (i *IntListIterator) Value() (int, error) {
 	var v int
 
 	if i.current == nil {
-		return v, ErrValueNotFound
+		return v, ErrIntListValueNotFound
 	}
 
 	return i.current.val, nil
