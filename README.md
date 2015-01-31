@@ -18,9 +18,10 @@ Usage of listgen:
 For example, the stringlist implementation is generated using:
 
 ```bash
-$ listgen -package stringlist -type=string \
-  -cmp "if a < b {return -1}; if a > b {return 1}; return 0;" \ 
+$ listgen -package stringlist -list-type StringList \
+  -value-type=string -cmp "if a < b {return -1}; if a > b {return 1}; return 0;" \
   -out stringlist/stringlist.go
+
 ```
 
 License
