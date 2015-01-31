@@ -17,6 +17,7 @@ var (
 
 type IntList struct {
 	head unsafe.Pointer
+	size int32
 }
 
 type IntListNode struct {
@@ -54,6 +55,7 @@ HEAD:
 			goto HEAD
 		}
 
+		atomic.AddInt32(&l.size, 1)
 		return nil
 	}
 
@@ -64,6 +66,7 @@ HEAD:
 			goto HEAD
 		}
 
+		atomic.AddInt32(&l.size, 1)
 		return nil
 	}
 
@@ -74,6 +77,7 @@ NEXT:
 			goto NEXT
 		}
 
+		atomic.AddInt32(&l.size, 1)
 		return nil
 	}
 
@@ -84,6 +88,7 @@ NEXT:
 			goto NEXT
 		}
 
+		atomic.AddInt32(&l.size, 1)
 		return nil
 	}
 
@@ -112,6 +117,7 @@ HEAD:
 			goto HEAD
 		}
 
+		atomic.AddInt32(&l.size, -1)
 		return nil
 	}
 
@@ -133,11 +139,17 @@ NEXT:
 			goto NEXT
 		}
 
+		atomic.AddInt32(&l.size, -1)
 		return nil
 	}
 
 	headNode = nextNode
 	goto NEXT
+}
+
+// Size returns the number of elements currently in the list.
+func (l *IntList) Size() int {
+	return int(atomic.LoadInt32(&l.size))
 }
 
 // NewIterator returns a new iterator. Values can be read

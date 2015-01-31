@@ -71,7 +71,10 @@ func TestIntList(t *testing.T) {
 
 	if v, err := i.Value(); err == nil {
 		t.Errorf("expected err to be non-nil. Got value %v", v)
+	}
 
+	if size := l.Size(); size != 8 {
+		t.Errorf("expected size to be %d, got %d", 8, size)
 	}
 }
 
@@ -138,5 +141,9 @@ func TestStringList(t *testing.T) {
 	if v, err := i.Value(); err == nil {
 		t.Errorf("expected err to be non-nil. Got value %v", v)
 
+	}
+
+	if size := l.Size(); size != 6 {
+		t.Errorf("expected size to be %d, got %d", 6, size)
 	}
 }
