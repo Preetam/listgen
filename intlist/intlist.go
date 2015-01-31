@@ -15,34 +15,33 @@ var (
 	ErrValueNotFound = errors.New("intlist: value does not exist")
 )
 
-type list struct {
+type IntList struct {
 	head unsafe.Pointer
-	cmp  func(int, int) int
 }
 
-type node struct {
+type IntListNode struct {
 	val  int
 	next unsafe.Pointer
 }
 
-type iterator struct {
-	list    *list
-	current *node
+type IntListIterator struct {
+	list    *IntList
+	current *IntListNode
 	valid   bool
 }
 
-func cmp(a int, b int) int {
+func IntListCmp(a, b int) int {
 	return a - b
 }
 
 // NewList returns a lock-free ordered list with values of type int.
-func NewList() *list {
-	return &list{}
+func NewList() *IntList {
+	return &IntList{}
 }
 
 // Insert inserts v into the list in order. An error is returned if v is already present.
-func (l *list) Insert(v int) error {
-	n := &node{
+func (l *IntList) Insert(v int) error {
+	n := &IntListNode{
 		val:  v,
 		next: nil,
 	}
@@ -58,8 +57,8 @@ HEAD:
 		return nil
 	}
 
-	headNode := (*node)(headPtr)
-	if cmp(headNode.val, n.val) > 0 {
+	headNode := (*IntListNode)(headPtr)
+	if IntListCmp(headNode.val, n.val) > 0 {
 		n.next = headPtr
 		if !atomic.CompareAndSwapPointer(&l.head, headPtr, unsafe.Pointer(n)) {
 			goto HEAD
@@ -79,7 +78,7 @@ NEXT:
 	}
 
 	nextNode := (*node)(nextPtr)
-	if cmp(nextNode.val, n.val) > 0 {
+	if IntListCmp(nextNode.val, n.val) > 0 {
 		n.next = nextPtr
 		if !atomic.CompareAndSwapPointer(&headNode.next, nextPtr, unsafe.Pointer(n)) {
 			goto NEXT
@@ -88,7 +87,7 @@ NEXT:
 		return nil
 	}
 
-	if cmp(nextNode.val, n.val) == 0 {
+	if IntListCmp(nextNode.val, n.val) == 0 {
 		return ErrValueExists
 	}
 
@@ -97,7 +96,7 @@ NEXT:
 }
 
 // Remove removes v from the list. An error is returned if v is not present.
-func (l *list) Remove(v int) error {
+func (l *IntList) Remove(v int) error {
 HEAD:
 	headPtr := atomic.LoadPointer(&l.head)
 
@@ -107,7 +106,7 @@ HEAD:
 
 	headNode := (*node)(headPtr)
 
-	if cmp(headNode.val, v) == 0 {
+	if IntListCmp(headNode.val, v) == 0 {
 		nextPtr := atomic.LoadPointer(&headNode.next)
 		if !atomic.CompareAndSwapPointer(&l.head, headPtr, nextPtr) {
 			goto HEAD
@@ -124,11 +123,11 @@ NEXT:
 
 	nextNode := (*node)(nextPtr)
 
-	if cmp(nextNode.val, v) > 0 {
+	if IntListCmp(nextNode.val, v) > 0 {
 		return ErrValueNotFound
 	}
 
-	if cmp(nextNode.val, v) == 0 {
+	if IntListCmp(nextNode.val, v) == 0 {
 		replacementPtr := atomic.LoadPointer(&nextNode.next)
 		if !atomic.CompareAndSwapPointer(&headNode.next, nextPtr, replacementPtr) {
 			goto NEXT
@@ -143,8 +142,8 @@ NEXT:
 
 // NewIterator returns a new iterator. Values can be read
 // after Next is called.
-func (l *list) NewIterator() *iterator {
-	return &iterator{
+func (l *IntList) NewIterator() *IntListIterator {
+	return &IntListIterator{
 		list:  l,
 		valid: true,
 	}
@@ -153,7 +152,7 @@ func (l *list) NewIterator() *iterator {
 // Next positions the iterator at the next node in the list.
 // Next will be positioned at the head on the first call.
 // The return value will be true if a value can be read from the list.
-func (i *iterator) Next() bool {
+func (i *IntListIterator) Next() bool {
 	if !i.valid {
 		return false
 	}
@@ -176,7 +175,7 @@ func (i *iterator) Next() bool {
 
 // Value reads the value from the current node of the iterator.
 // An error is returned if a value cannot be retrieved.
-func (i *iterator) Value() (int, error) {
+func (i *IntListIterator) Value() (int, error) {
 	var v int
 
 	if i.current == nil {
@@ -187,18 +186,18 @@ func (i *iterator) Value() (int, error) {
 }
 
 // String returns the string representation of the list.
-func (l *list) String() string {
+func (l *IntList) String() string {
 	output := ""
 
 	if l.head == nil {
 		return output
 	}
 
-	n := (*node)(unsafe.Pointer(l.head))
+	i := l.NewIterator()
 
-	for n != nil {
-		output += fmt.Sprintf("%v ", n.val)
-		n = (*node)(unsafe.Pointer(n.next))
+	for i.Next() {
+		v, _ := i.Value()
+		output += fmt.Sprintf("%v ", v)
 	}
 
 	return output

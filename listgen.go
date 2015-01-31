@@ -9,6 +9,7 @@ import (
 
 type listDesc struct {
 	Package         string
+	ListType        string
 	ValueType       string
 	CompareFunction string
 }
@@ -16,7 +17,8 @@ type listDesc struct {
 func main() {
 	outputFile := flag.String("out", "", "Output file. Leave blank for stdout.")
 	packageName := flag.String("package", "", "Package name to use for the list.")
-	valueType := flag.String("type", "", "Value type.")
+	listType := flag.String("list-type", "List", "List type.")
+	valueType := flag.String("value-type", "", "Value type.")
 	cmpFunc := flag.String("cmp", "", "Comparison function body. The argument names are `a' and `b'.")
 	flag.Parse()
 
@@ -55,6 +57,7 @@ func main() {
 
 	sourceTempl.Execute(w, listDesc{
 		Package:         *packageName,
+		ListType:        *listType,
 		ValueType:       *valueType,
 		CompareFunction: *cmpFunc,
 	})

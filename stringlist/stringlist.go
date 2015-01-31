@@ -15,23 +15,22 @@ var (
 	ErrValueNotFound = errors.New("stringlist: value does not exist")
 )
 
-type list struct {
+type StringList struct {
 	head unsafe.Pointer
-	cmp  func(string, string) int
 }
 
-type node struct {
+type StringListNode struct {
 	val  string
 	next unsafe.Pointer
 }
 
-type iterator struct {
-	list    *list
-	current *node
+type StringListIterator struct {
+	list    *StringList
+	current *StringListNode
 	valid   bool
 }
 
-func cmp(a string, b string) int {
+func StringListCmp(a, b string) int {
 	if a < b {
 		return -1
 	}
@@ -42,13 +41,13 @@ func cmp(a string, b string) int {
 }
 
 // NewList returns a lock-free ordered list with values of type string.
-func NewList() *list {
-	return &list{}
+func NewList() *StringList {
+	return &StringList{}
 }
 
 // Insert inserts v into the list in order. An error is returned if v is already present.
-func (l *list) Insert(v string) error {
-	n := &node{
+func (l *StringList) Insert(v string) error {
+	n := &StringListNode{
 		val:  v,
 		next: nil,
 	}
@@ -64,8 +63,8 @@ HEAD:
 		return nil
 	}
 
-	headNode := (*node)(headPtr)
-	if cmp(headNode.val, n.val) > 0 {
+	headNode := (*StringListNode)(headPtr)
+	if StringListCmp(headNode.val, n.val) > 0 {
 		n.next = headPtr
 		if !atomic.CompareAndSwapPointer(&l.head, headPtr, unsafe.Pointer(n)) {
 			goto HEAD
@@ -85,7 +84,7 @@ NEXT:
 	}
 
 	nextNode := (*node)(nextPtr)
-	if cmp(nextNode.val, n.val) > 0 {
+	if StringListCmp(nextNode.val, n.val) > 0 {
 		n.next = nextPtr
 		if !atomic.CompareAndSwapPointer(&headNode.next, nextPtr, unsafe.Pointer(n)) {
 			goto NEXT
@@ -94,7 +93,7 @@ NEXT:
 		return nil
 	}
 
-	if cmp(nextNode.val, n.val) == 0 {
+	if StringListCmp(nextNode.val, n.val) == 0 {
 		return ErrValueExists
 	}
 
@@ -103,7 +102,7 @@ NEXT:
 }
 
 // Remove removes v from the list. An error is returned if v is not present.
-func (l *list) Remove(v string) error {
+func (l *StringList) Remove(v string) error {
 HEAD:
 	headPtr := atomic.LoadPointer(&l.head)
 
@@ -113,7 +112,7 @@ HEAD:
 
 	headNode := (*node)(headPtr)
 
-	if cmp(headNode.val, v) == 0 {
+	if StringListCmp(headNode.val, v) == 0 {
 		nextPtr := atomic.LoadPointer(&headNode.next)
 		if !atomic.CompareAndSwapPointer(&l.head, headPtr, nextPtr) {
 			goto HEAD
@@ -130,11 +129,11 @@ NEXT:
 
 	nextNode := (*node)(nextPtr)
 
-	if cmp(nextNode.val, v) > 0 {
+	if StringListCmp(nextNode.val, v) > 0 {
 		return ErrValueNotFound
 	}
 
-	if cmp(nextNode.val, v) == 0 {
+	if StringListCmp(nextNode.val, v) == 0 {
 		replacementPtr := atomic.LoadPointer(&nextNode.next)
 		if !atomic.CompareAndSwapPointer(&headNode.next, nextPtr, replacementPtr) {
 			goto NEXT
@@ -149,8 +148,8 @@ NEXT:
 
 // NewIterator returns a new iterator. Values can be read
 // after Next is called.
-func (l *list) NewIterator() *iterator {
-	return &iterator{
+func (l *StringList) NewIterator() *StringListIterator {
+	return &StringListIterator{
 		list:  l,
 		valid: true,
 	}
@@ -159,7 +158,7 @@ func (l *list) NewIterator() *iterator {
 // Next positions the iterator at the next node in the list.
 // Next will be positioned at the head on the first call.
 // The return value will be true if a value can be read from the list.
-func (i *iterator) Next() bool {
+func (i *StringListIterator) Next() bool {
 	if !i.valid {
 		return false
 	}
@@ -182,7 +181,7 @@ func (i *iterator) Next() bool {
 
 // Value reads the value from the current node of the iterator.
 // An error is returned if a value cannot be retrieved.
-func (i *iterator) Value() (string, error) {
+func (i *StringListIterator) Value() (string, error) {
 	var v string
 
 	if i.current == nil {
@@ -193,18 +192,18 @@ func (i *iterator) Value() (string, error) {
 }
 
 // String returns the string representation of the list.
-func (l *list) String() string {
+func (l *StringList) String() string {
 	output := ""
 
 	if l.head == nil {
 		return output
 	}
 
-	n := (*node)(unsafe.Pointer(l.head))
+	i := l.NewIterator()
 
-	for n != nil {
-		output += fmt.Sprintf("%v ", n.val)
-		n = (*node)(unsafe.Pointer(n.next))
+	for i.Next() {
+		v, _ := i.Value()
+		output += fmt.Sprintf("%v ", v)
 	}
 
 	return output

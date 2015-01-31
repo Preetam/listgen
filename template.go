@@ -21,34 +21,33 @@ var (
 	ErrValueNotFound = errors.New("{{.Package}}: value does not exist")
 )
 
-type list struct {
+type {{.ListType}} struct {
 	head unsafe.Pointer
-	cmp  func({{.ValueType}}, {{.ValueType}}) int
 }
 
-type node struct {
+type {{.ListType}}Node struct {
 	val  {{.ValueType}}
 	next unsafe.Pointer
 }
 
-type iterator struct {
-	list    *list
-	current *node
+type {{.ListType}}Iterator struct {
+	list    *{{.ListType}}
+	current *{{.ListType}}Node
 	valid   bool
 }
 
-func cmp(a {{.ValueType}}, b {{.ValueType}}) int {
+func {{.ListType}}Cmp(a, b {{.ValueType}}) int {
 {{.CompareFunction}}
 }
 
 // NewList returns a lock-free ordered list with values of type {{.ValueType}}.
-func NewList() *list {
-	return &list{}
+func NewList() *{{.ListType}} {
+	return &{{.ListType}}{}
 }
 
 // Insert inserts v into the list in order. An error is returned if v is already present.
-func (l *list) Insert(v {{.ValueType}}) error {
-	n := &node{
+func (l *{{.ListType}}) Insert(v {{.ValueType}}) error {
+	n := &{{.ListType}}Node{
 		val:  v,
 		next: nil,
 	}
@@ -64,8 +63,8 @@ HEAD:
 		return nil
 	}
 
-	headNode := (*node)(headPtr)
-	if cmp(headNode.val, n.val) > 0 {
+	headNode := (*{{.ListType}}Node)(headPtr)
+	if {{.ListType}}Cmp(headNode.val, n.val) > 0 {
 		n.next = headPtr
 		if !atomic.CompareAndSwapPointer(&l.head, headPtr, unsafe.Pointer(n)) {
 			goto HEAD
@@ -85,7 +84,7 @@ NEXT:
 	}
 
 	nextNode := (*node)(nextPtr)
-	if cmp(nextNode.val, n.val) > 0 {
+	if {{.ListType}}Cmp(nextNode.val, n.val) > 0 {
 		n.next = nextPtr
 		if !atomic.CompareAndSwapPointer(&headNode.next, nextPtr, unsafe.Pointer(n)) {
 			goto NEXT
@@ -94,7 +93,7 @@ NEXT:
 		return nil
 	}
 
-	if cmp(nextNode.val, n.val) == 0 {
+	if {{.ListType}}Cmp(nextNode.val, n.val) == 0 {
 		return ErrValueExists
 	}
 
@@ -103,7 +102,7 @@ NEXT:
 }
 
 // Remove removes v from the list. An error is returned if v is not present.
-func (l *list) Remove(v {{.ValueType}}) error {
+func (l *{{.ListType}}) Remove(v {{.ValueType}}) error {
 HEAD:
 	headPtr := atomic.LoadPointer(&l.head)
 
@@ -113,7 +112,7 @@ HEAD:
 
 	headNode := (*node)(headPtr)
 
-	if cmp(headNode.val, v) == 0 {
+	if {{.ListType}}Cmp(headNode.val, v) == 0 {
 		nextPtr := atomic.LoadPointer(&headNode.next)
 		if !atomic.CompareAndSwapPointer(&l.head, headPtr, nextPtr) {
 			goto HEAD
@@ -130,11 +129,11 @@ NEXT:
 
 	nextNode := (*node)(nextPtr)
 
-	if cmp(nextNode.val, v) > 0 {
+	if {{.ListType}}Cmp(nextNode.val, v) > 0 {
 		return ErrValueNotFound
 	}
 
-	if cmp(nextNode.val, v) == 0 {
+	if {{.ListType}}Cmp(nextNode.val, v) == 0 {
 		replacementPtr := atomic.LoadPointer(&nextNode.next)
 		if !atomic.CompareAndSwapPointer(&headNode.next, nextPtr, replacementPtr) {
 			goto NEXT
@@ -149,8 +148,8 @@ NEXT:
 
 // NewIterator returns a new iterator. Values can be read
 // after Next is called.
-func (l *list) NewIterator() *iterator {
-	return &iterator{
+func (l *{{.ListType}}) NewIterator() *{{.ListType}}Iterator {
+	return &{{.ListType}}Iterator{
 		list:  l,
 		valid: true,
 	}
@@ -159,7 +158,7 @@ func (l *list) NewIterator() *iterator {
 // Next positions the iterator at the next node in the list.
 // Next will be positioned at the head on the first call.
 // The return value will be true if a value can be read from the list.
-func (i *iterator) Next() bool {
+func (i *{{.ListType}}Iterator) Next() bool {
 	if !i.valid {
 		return false
 	}
@@ -182,7 +181,7 @@ func (i *iterator) Next() bool {
 
 // Value reads the value from the current node of the iterator.
 // An error is returned if a value cannot be retrieved.
-func (i *iterator) Value() ({{.ValueType}}, error) {
+func (i *{{.ListType}}Iterator) Value() ({{.ValueType}}, error) {
 	var v {{.ValueType}}
 
 	if i.current == nil {
@@ -193,18 +192,18 @@ func (i *iterator) Value() ({{.ValueType}}, error) {
 }
 
 // String returns the string representation of the list.
-func (l *list) String() string {
+func (l *{{.ListType}}) String() string {
 	output := ""
 
 	if l.head == nil {
 		return output
 	}
 
-	n := (*node)(unsafe.Pointer(l.head))
+	i := l.NewIterator()
 
-	for n != nil {
-		output += fmt.Sprintf("%v ", n.val)
-		n = (*node)(unsafe.Pointer(n.next))
+	for i.Next() {
+		v, _ := i.Value()
+		output += fmt.Sprintf("%v ", v)
 	}
 
 	return output
