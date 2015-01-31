@@ -8,19 +8,23 @@ First get listgen using `go get github.com/PreetamJinka/listgen`.
 
 ```
 $ listgen -h
-Usage of listgen:
+Usage of ./listgen:
   -cmp="": Comparison function body. The argument names are `a' and `b'.
+  -list-type="List": List type.
   -out="": Output file. Leave blank for stdout.
   -package="": Package name to use for the list.
-  -type="": Value type.
+  -value-type="": Value type.
 ```
 
 For example, the stringlist implementation is generated using:
 
 ```bash
-$ listgen -package stringlist -list-type StringList \
-  -value-type=string -cmp "if a < b {return -1}; if a > b {return 1}; return 0;" \
-  -out stringlist/stringlist.go
+$ listgen \
+  -package "stringlist" \
+  -list-type "StringList" \
+  -value-type "string" \
+  -cmp "if a < b {return -1}; if a > b {return 1}; return 0;" \
+  -out "stringlist/stringlist.go"
 
 ```
 
