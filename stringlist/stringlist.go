@@ -83,7 +83,7 @@ NEXT:
 		return nil
 	}
 
-	nextNode := (*node)(nextPtr)
+	nextNode := (*StringListNode)(nextPtr)
 	if StringListCmp(nextNode.val, n.val) > 0 {
 		n.next = nextPtr
 		if !atomic.CompareAndSwapPointer(&headNode.next, nextPtr, unsafe.Pointer(n)) {
@@ -110,7 +110,7 @@ HEAD:
 		return ErrStringListValueNotFound
 	}
 
-	headNode := (*node)(headPtr)
+	headNode := (*StringListNode)(headPtr)
 
 	if StringListCmp(headNode.val, v) == 0 {
 		nextPtr := atomic.LoadPointer(&headNode.next)
@@ -127,7 +127,7 @@ NEXT:
 		return ErrStringListValueNotFound
 	}
 
-	nextNode := (*node)(nextPtr)
+	nextNode := (*StringListNode)(nextPtr)
 
 	if StringListCmp(nextNode.val, v) > 0 {
 		return ErrStringListValueNotFound
@@ -169,11 +169,11 @@ func (i *StringListIterator) Next() bool {
 			return false
 		}
 
-		i.current = (*node)(i.list.head)
+		i.current = (*StringListNode)(i.list.head)
 		return true
 	}
 
-	i.current = (*node)(i.current.next)
+	i.current = (*StringListNode)(i.current.next)
 
 	i.valid = i.current != nil
 	return i.valid

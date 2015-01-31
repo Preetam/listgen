@@ -77,7 +77,7 @@ NEXT:
 		return nil
 	}
 
-	nextNode := (*node)(nextPtr)
+	nextNode := (*IntListNode)(nextPtr)
 	if IntListCmp(nextNode.val, n.val) > 0 {
 		n.next = nextPtr
 		if !atomic.CompareAndSwapPointer(&headNode.next, nextPtr, unsafe.Pointer(n)) {
@@ -104,7 +104,7 @@ HEAD:
 		return ErrIntListValueNotFound
 	}
 
-	headNode := (*node)(headPtr)
+	headNode := (*IntListNode)(headPtr)
 
 	if IntListCmp(headNode.val, v) == 0 {
 		nextPtr := atomic.LoadPointer(&headNode.next)
@@ -121,7 +121,7 @@ NEXT:
 		return ErrIntListValueNotFound
 	}
 
-	nextNode := (*node)(nextPtr)
+	nextNode := (*IntListNode)(nextPtr)
 
 	if IntListCmp(nextNode.val, v) > 0 {
 		return ErrIntListValueNotFound
@@ -163,11 +163,11 @@ func (i *IntListIterator) Next() bool {
 			return false
 		}
 
-		i.current = (*node)(i.list.head)
+		i.current = (*IntListNode)(i.list.head)
 		return true
 	}
 
-	i.current = (*node)(i.current.next)
+	i.current = (*IntListNode)(i.current.next)
 
 	i.valid = i.current != nil
 	return i.valid

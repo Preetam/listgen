@@ -20,7 +20,7 @@ func TestIntList(t *testing.T) {
 
 	err := l.Insert(4)
 	if err == nil {
-		t.Fatal("expected error:", intlist.ErrValueExists)
+		t.Fatal("expected error:", intlist.ErrIntListValueExists)
 	}
 
 	err = l.Remove(4)
@@ -86,7 +86,7 @@ func TestStringList(t *testing.T) {
 
 	err := l.Insert("o")
 	if err == nil {
-		t.Fatal("expected error:", intlist.ErrValueExists)
+		t.Fatal("expected error:", intlist.ErrIntListValueExists)
 	}
 
 	err = l.Remove("o")

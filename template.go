@@ -83,7 +83,7 @@ NEXT:
 		return nil
 	}
 
-	nextNode := (*node)(nextPtr)
+	nextNode := (*{{.ListType}}Node)(nextPtr)
 	if {{.ListType}}Cmp(nextNode.val, n.val) > 0 {
 		n.next = nextPtr
 		if !atomic.CompareAndSwapPointer(&headNode.next, nextPtr, unsafe.Pointer(n)) {
@@ -110,7 +110,7 @@ HEAD:
 		return Err{{.ListType}}ValueNotFound
 	}
 
-	headNode := (*node)(headPtr)
+	headNode := (*{{.ListType}}Node)(headPtr)
 
 	if {{.ListType}}Cmp(headNode.val, v) == 0 {
 		nextPtr := atomic.LoadPointer(&headNode.next)
@@ -127,7 +127,7 @@ NEXT:
 		return Err{{.ListType}}ValueNotFound
 	}
 
-	nextNode := (*node)(nextPtr)
+	nextNode := (*{{.ListType}}Node)(nextPtr)
 
 	if {{.ListType}}Cmp(nextNode.val, v) > 0 {
 		return Err{{.ListType}}ValueNotFound
@@ -169,11 +169,11 @@ func (i *{{.ListType}}Iterator) Next() bool {
 			return false
 		}
 
-		i.current = (*node)(i.list.head)
+		i.current = (*{{.ListType}}Node)(i.list.head)
 		return true
 	}
 
-	i.current = (*node)(i.current.next)
+	i.current = (*{{.ListType}}Node)(i.current.next)
 
 	i.valid = i.current != nil
 	return i.valid
