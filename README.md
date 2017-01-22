@@ -1,4 +1,4 @@
-listgen [![Build Status](https://drone.io/github.com/PreetamJinka/listgen/status.png)](https://drone.io/github.com/PreetamJinka/listgen/latest) [![BSD License](https://img.shields.io/pypi/l/Django.svg)](https://github.com/PreetamJinka/listgen/blob/master/LICENSE)
+listgen [![BSD License](https://img.shields.io/pypi/l/Django.svg)](https://github.com/PreetamJinka/listgen/blob/master/LICENSE)
 ===
 listgen is a lock-free ordered linked list generator for Go.
 
